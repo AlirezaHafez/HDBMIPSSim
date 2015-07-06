@@ -20,7 +20,7 @@ import memory.SegmentDefragmenter;
  * @author Alirez
  */
 public class Main extends javax.swing.JFrame {
-
+    int count=0;
     String filePath = null;
     int lineOfInstructions;
     Monitor monitor;
@@ -48,6 +48,37 @@ public class Main extends javax.swing.JFrame {
         setStyle(program3);
         loadprograms();
 }
+
+    private Main(int result,JFileChooser input) {
+        initComponents();
+        assembleButton.setVisible(false);
+        runButton.setVisible(false);
+        nextIns.setVisible(false);
+        execAll.setVisible(false);
+        computer = new Computer();
+
+        computer.fix_memory_table(memoryTable);
+        monitor = new Monitor(computer.aa.getMemory());
+        
+        for (int i = 0; i < mipsCode.getRowCount(); i++) {
+            mipsCode.setValueAt(Integer.toHexString(i*4), i, 0);
+        }
+        setStyle(mipsCode);
+        setStyle(program1);
+        setStyle(program2);
+        setStyle(program3);
+        loadprograms();
+        filePath = input.getSelectedFile().getAbsolutePath();
+//            System.out.println(filePath);
+                String file = FileIO.Fread(filePath.replace("\\", "/"));
+                String[] line = file.split("\n");
+                for (int i = 0; i < line.length; i++) {
+                    DefaultTableModel model = (DefaultTableModel) mipsCode.getModel();
+                    model.addRow(new Object[]{"",line[i],"",""});
+                }
+                assembleButton.setVisible(true);
+                count++;
+    }
     private void loadprograms(){
         HashMap<Integer, SegmentDefragmenter> programs= computer.aa.getPrograms();
 //        System.out.println(programs.toString());
@@ -78,10 +109,8 @@ public class Main extends javax.swing.JFrame {
     private void setStyle(JTable table){
         table.setEnabled(false);
         table.getColumn("Assembled").setMinWidth(180);
-        table.getColumn("Code").setMaxWidth(150);
-        table.getColumn("Code").setMinWidth(110);
+        table.getColumn("Code").setMinWidth(170);
         table.getColumn("Add.").setMaxWidth(90);
-        table.getColumn("C").setMaxWidth(20);
     }
 
     /**
@@ -141,11 +170,11 @@ public class Main extends javax.swing.JFrame {
 
             },
             new String [] {
-                "Add.", "Code", "Assembled", "C"
+                "Add.", "Code", "Assembled"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.Object.class, java.lang.String.class, java.lang.String.class, java.lang.Object.class
+                java.lang.Object.class, java.lang.String.class, java.lang.String.class
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -441,15 +470,23 @@ public class Main extends javax.swing.JFrame {
         JFileChooser input = new JFileChooser();
         int result = input.showOpenDialog(this);
         if (result == JFileChooser.APPROVE_OPTION) {
-            filePath = input.getSelectedFile().getAbsolutePath();
+            if(count == 0){
+                filePath = input.getSelectedFile().getAbsolutePath();
 //            System.out.println(filePath);
-            String file = FileIO.Fread(filePath.replace("\\", "/"));
-            String[] line = file.split("\n");
-            for (int i = 0; i < line.length; i++) {
-                DefaultTableModel model = (DefaultTableModel) mipsCode.getModel();
-                model.addRow(new Object[]{"",line[i],"",""});
+                String file = FileIO.Fread(filePath.replace("\\", "/"));
+                String[] line = file.split("\n");
+                for (int i = 0; i < line.length; i++) {
+                    DefaultTableModel model = (DefaultTableModel) mipsCode.getModel();
+                    model.addRow(new Object[]{"",line[i],"",""});
+                }
+                assembleButton.setVisible(true);
+                count++;
+            }else{
+                Main new_main = new Main(result,input);
+                new_main.setVisible(true);
+                this.setVisible(false);
             }
-            assembleButton.setVisible(true);
+            
         } else if (result == JFileChooser.CANCEL_OPTION) {
             System.out.println("Cancel was selected");
         }
@@ -457,7 +494,7 @@ public class Main extends javax.swing.JFrame {
 
     private void execAllActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_execAllActionPerformed
         while (computer.currentLineOfInstructions < computer.lineOfInstructions) {
-            computer.runSingleSigle();
+            computer.runSingleSycle();
         }
         computer.fix_memory_table(memoryTable);
         computer.Fix_regfile_table(regTable);
@@ -508,7 +545,7 @@ public class Main extends javax.swing.JFrame {
     }
     
     private void nextInsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextInsActionPerformed
-        if (computer.runSingleSigle()) {
+        if (computer.runSingleSycle()) {
             computer.fix_memory_table(memoryTable);
             Simonitor.setText(monitor.toString());
             selectTrueInstruction();
@@ -542,10 +579,18 @@ public class Main extends javax.swing.JFrame {
             int code_number=0;
             for (int i = 0; i < mipsCode.getRowCount(); i++) {
                 String code = (String)mipsCode.getValueAt(i, 1);
-                if(code.indexOf(':')==-1){
-                    mipsCode.setValueAt(assembled.get(code_number).getAddress(), i, 0);
-                    mipsCode.setValueAt(assembled.get(code_number).getInstruction(), i, 2);
-                    code_number++;   
+                try{
+	                if(code.indexOf(':')==-1){
+	                    mipsCode.setValueAt(assembled.get(code_number).getAddress(), i, 0);
+	                    mipsCode.setValueAt(assembled.get(code_number).getInstruction(), i, 2);
+	                    code_number++;   
+	                }
+                }
+                catch(Exception e)
+                {
+                	System.out.println("there was an error in:");
+                	System.out.println(code);
+                	throw e;
                 }
                              
             }

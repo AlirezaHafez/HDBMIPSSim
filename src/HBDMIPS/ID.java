@@ -7,7 +7,7 @@ package HBDMIPS;
  * @author HBD
  */
 public class ID{
-	public Register_file regfile = new Register_file();// 32 of 32bit
+	public Register_file regfile = new Register_file("FILE");// 32 of 32bit
                                                            //MIPS architecture 
                                                            //Registers.
 	private CU cu = new CU(); //Control Unit
@@ -61,7 +61,7 @@ public class ID{
                 //ID [Or current] stage's Program counter.
                 //All in ID/EXE Pipeline Register.
 		idexe.setSignExt(signExt(instruction.substring(16, 32)));
-                String cu_result = cu.action(instruction.substring(0, 6));
+                String cu_result = cu.action(instruction.substring(0, 6),instruction);
                 if(cu_result.charAt(10)=='1'){// means if instruction is jump
                     idexe.setSignExt(("0000".concat(instruction.substring(6, 32))).concat("00"));
                 }

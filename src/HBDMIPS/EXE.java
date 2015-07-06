@@ -11,9 +11,13 @@ public class EXE {
 	private EXE_MEM exemem = new EXE_MEM();// EXE/MEM for EXE stage.
         public String prev_instruction = "";// ?????????????????????????????????
         private String j_pc;//If Instruction is jump PC should change.
-	public EXE(ID_EXE idexe, EXE_MEM exemem) {
+        private IF if_stage;
+        private ID id_stage;
+	public EXE(ID_EXE idexe, EXE_MEM exemem,IF if_stage,ID id_stage) {
 		this.exemem = exemem;
 		this.idexe = idexe;
+                this.if_stage = if_stage;
+                this.id_stage = id_stage;
 	}
         
         
@@ -26,10 +30,7 @@ public class EXE {
          * @return isJReg - Boolean representing detection of JR. 
          */
         public boolean isJumpReg(){
-            String func_bit = getIdexe().getSignExt().substring(26, 32);
-            if("001000".equals(func_bit))
-                return Boolean.TRUE;
-            return Boolean.FALSE;
+            return idexe.getControlBits().charAt(13)=='1';
         }
         
         
@@ -47,8 +48,10 @@ public class EXE {
             String func_bit = getIdexe().getSignExt().substring(26, 32);
             String ALUOp = getIdexe().getControlBits().substring(1, 3)+getIdexe().getControlBits().substring(11, 13);
             if("001100".equals(func_bit) && "1000".equals(ALUOp)){
+                id_stage.regfile.setReg(31, if_stage.getPC());
                 return true;
             }
+            
             return false;
         }
         
@@ -143,7 +146,7 @@ public class EXE {
                 //have a Load or something, Otherwise it's R-Type and or branch.]
                 else{
                     int data1 = getIdexe().getRS_DATA();
-                    int data2 = ALU_Src?(byte)Long.parseLong(getIdexe().getSignExt(), 2):getIdexe().getRT_DATA();
+                    int data2 = ALU_Src?(int)Long.parseLong(getIdexe().getSignExt(), 2):getIdexe().getRT_DATA();
                     getExemem().setALU_result(alu(data1,data2,alucu_func));
                 }
 		//Save Zero, PC, RT_DATA[maybe used for Write Data of MEM], Control Bits
